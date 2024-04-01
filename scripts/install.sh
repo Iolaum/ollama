@@ -64,7 +64,8 @@ fi
 status "Downloading ollama..."
 curl --fail --show-error --location --progress-bar -o $TEMP_DIR/ollama "https://ollama.com/download/ollama-linux-${ARCH}${VER_PARAM}"
 
-for BINDIR in /usr/local/bin /usr/bin /bin; do
+# At Fedora Silverblue only /var/ is not read-only - may need to add it to PATH seperately
+for BINDIR in /var/opt /opt; do
     echo $PATH | grep -q $BINDIR && break || continue
 done
 
@@ -83,7 +84,7 @@ trap install_success EXIT
 configure_systemd() {
     if ! id ollama >/dev/null 2>&1; then
         status "Creating ollama user..."
-        $SUDO useradd -r -s /bin/false -U -m -d /usr/share/ollama ollama
+        $SUDO useradd -r -s /bin/false -U -m -d /var/home/ollama ollama
     fi
     if getent group render >/dev/null 2>&1; then
         status "Adding ollama user to render group..."
@@ -109,7 +110,7 @@ User=ollama
 Group=ollama
 Restart=always
 RestartSec=3
-Environment="PATH=$PATH"
+Environment="PATH=/var/opt:$PATH"
 
 [Install]
 WantedBy=default.target
